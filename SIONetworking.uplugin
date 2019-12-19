@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"FriendlyName": "SIONetworking",
+	"Description": "",
+	"Category": "Networking",
+	"CreatedBy": "getnamo",
+	"CreatedByURL": "getnamo.com",
+	"DocsURL": "https://github.com/getnamo/SIONetworking",
+	"MarketplaceURL": "",
+	"SupportURL": "https://github.com/getnamo/SIONetworking/issues",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "SIONetworking",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
