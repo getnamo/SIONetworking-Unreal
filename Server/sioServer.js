@@ -54,8 +54,8 @@ io.on('connection', (socket) =>{
 
 	//echo message to all other clients
 	socket.on('replicate', (data)=>{
-		console.log(data);
-		socket.broadcast.emit('onReplicateData', data);
+		console.dir(data, { depth:null});
+		socket.broadcast.emit('onReplicatedData', data);
 	});
 
 	//should be requested on startup
