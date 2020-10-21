@@ -92,7 +92,7 @@ io.on('connection', (socket) =>{
 
 	//Voice - temp todo: switch to separate service
 	socket.on('replicateVoice', (voiceData)=>{
-		socket.broadcast.emi('onVoice', voiceData);
+		socket.broadcast.emit('onVoice', voiceData);
 	});
 	//End Voice
 });
