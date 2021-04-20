@@ -6,19 +6,15 @@ const app = require('express')();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const util = require('util');
+
+//This may need consolidation
+let { userSocketMap,
+	socketUserMap,
+	playerMap,
+	actorMap,
+	clients } = require('./storage.js');
+
 const port = 3001;
-
-let clients = [];
-
-//uid => socket
-let userSocketMap = {};
-let socketUserMap = {};
-//uid => startup data
-let playerMap = {};
-
-//uid-aid => startup data
-let actorMap = {};
-
 
 io.on('connection', (socket) =>{
 
