@@ -32,7 +32,10 @@ io.on('connection', (socket) =>{
 		delete playerMap[playerCleanupData.userId];
 		let playerSocket = userSocketMap[playerCleanupData.userId];
 		delete userSocketMap[playerCleanupData.userId];
-		delete socketUserMap[playerSocket.id];
+
+		if(playerSocket){
+			delete socketUserMap[playerSocket.id];
+		}
 
 		//emit cleanup message to others
 		socket.broadcast.emit('onPlayerLeft', playerCleanupData);
