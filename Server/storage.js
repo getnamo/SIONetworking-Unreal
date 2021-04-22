@@ -80,6 +80,9 @@ const storage = ()=>{
 	function playerForSession(sid){
 		return sessionPlayerMap[sid];
 	}
+	function socketForSession(sid){
+		return sessionSocketMap[sid];
+	}
 
 	function onConnection(socket){
 		clients.push(socket.id);
@@ -97,7 +100,9 @@ const storage = ()=>{
 
 		if(playerSocket){
 			delete socketUserMap[playerSocket.id];
+			return true;
 		}
+		return false;
 	}
 	function onDisconnect(socket){
 		//remove player information

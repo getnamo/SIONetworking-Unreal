@@ -22,45 +22,36 @@ userSocketMap,
 */
 
 const port = 3001;
+const debugReplicationStream = true;
 
 io.on('connection', socket =>{
 
 	//track connected clients via log
+	storage.onConnection(socket);
 	clients.push(socket.id);
-	const clientConnectedMsg = 'User connected ' + util.inspect(socket.id) + ', total: ' + clients.length;
-	console.log(clientConnectedMsg);
 
-	function playerCleanup(playerCleanupData){
-		//cleanup data
-		delete playerMap[playerCleanupData.userId];
-		let playerSocket = userSocketMap[playerCleanupData.userId];
-		delete userSocketMap[playerCleanupData.userId];
-
-		if(playerSocket){
-			delete socketUserMap[playerSocket.id];
-		}
+	function onPlayerDeleted(sid){
+		//this deletes the player from storage
+		storage.onDisconnect(storage.socketForSession(sid));
 
 		//emit cleanup message to others
-		socket.broadcast.emit('onPlayerLeft', playerCleanupData);
-		console.log('onPlayerLeft', playerCleanupData);
-		console.log(playerMap);
-	};
+		socket.broadcast.emit('onPlayerLeft', sid);
+		console.log('onPlayerLeft', sid);
+	}
 
 	socket.on('disconnect', ()=>{
-		clients.pop(socket.id);
-		const clientDisconnectedMsg = 'User disconnected ' + util.inspect(socket.id) + ', total: ' + clients.length;
-		//io.emit(chatMessageEvent, clientDisconnectedMsg);
-		console.log(clientDisconnectedMsg);
-
-		let cleanupData = {'userId': socketUserMap[socket.id]};
-		playerCleanup(cleanupData);
+		onPlayerDeleted(storage.sessionForSocket(socket));
 	});
 
 	//Replication
 
 	//echo message to all other clients
+	//data should have sid-aid identifier so it know where to
+	//get forwarded to
 	socket.on('replicate', data =>{
-		console.dir(data, { depth:null});
+		if(debugReplicationStream){
+			console.dir(data, { depth:null});
+		}
 		socket.broadcast.emit('onReplicatedData', data);
 	});
 
@@ -78,18 +69,30 @@ io.on('connection', socket =>{
 		socket.broadcast.emit('onPlayerJoined', playerForSession(sid));
 	});
 
-	socket.on('deletePlayer', playerCleanup);
+	//remote delete, force someone off typically the 'disconnect variant will be called'
+	socket.on('deletePlayer', (sid, callback)=>{
+		let forcedSocket = storage.socketForSession(sid);
+		onPlayerDeleted(sid);
+
+		if(forcedSocket){
+			forcedSocket.disconnect();
+			callback(true);
+		}
+		else{
+			callback(false);
+		}
+	});
 
 	socket.on('newActor', actorStartupData =>{
 		//store latest data in actor map
-		actorMap[actorStartupData.userId + '-' + actorStartupData.actorId] = actorStartupData;
+		actorMap[actorStartupData.sessionId + '-' + actorStartupData.actorId] = actorStartupData;
 
 		socket.broadcast.emit('onNewActor', actorStartupData);
 	});
 
 	socket.on('deleteActor', actorCleanupData =>{
 		//store latest data in actor map
-		delete actorMap[actorStartupData.userId + '-' + actorStartupData.actorId];
+		delete actorMap[actorStartupData.sessionId + '-' + actorStartupData.actorId];
 
 		//emit cleanup message to others
 		socket.broadcast.emit('onDeleteActor', actorCleanupData);
