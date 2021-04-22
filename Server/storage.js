@@ -8,9 +8,8 @@
 */
 
 const storage = ()=>{
-
-
-	let idCounter = 0;
+	let sessionIdCounter = 0;	//unique way to id a user
+	let actorIdCount = 0;	 	//unique way to id an actor
 
 	//socket.io clients
 	let clients = [];
@@ -26,8 +25,10 @@ const storage = ()=>{
 	let sessionPlayerMap = {};
 	let sessionLoginMap = {};
 
-	//sid-aid => startup data
+	//aid => last data
+	//sid-alid => aid
 	let actorMap = {};
+	let actorSessionLocalToIdMap = {};
 
 	function resetAllData(){
 		//array of socket.id
@@ -40,13 +41,20 @@ const storage = ()=>{
 		sessionPlayerMap = {};
 		sessionLoginMap = {};
 		actorMap = {};
+		actorSessionLocalToIdMap = {};
 
-		idCounter = 0;
+		sessionIdCounter = 0;
+		actorIdCount = 0;
 	}
 
 	function requestNewSessionId(){
-		const newId = idCounter;
-		idCounter++;
+		const newId = sessionIdCounter;
+		sessionIdCounter++;
+		return newId;
+	}
+	function requestNewActorId(){
+		const newId = actorIdCount;
+		actorIdCount++;
 		return newId;
 	}
 
@@ -118,7 +126,14 @@ const storage = ()=>{
 
 	function newActor(newActorData){
 		//actorSessionUniqueId == sessionId-actorLocalId
-		actorMap[newActorData.actorSessionUniqueId] = newActorData;
+		const actorId = requestNewActorId();
+
+		actorSessionLocalToIdMap[newActorData.actorSessionUniqueId] = actorId;
+
+		newActorData.actorId = actorId;
+		actorMap[actorId] = newActorData;
+
+		return actorId;
 	}
 	function deleteActor(deleteActorData){
 		delete actorMap[newActorData.actorSessionUniqueId];

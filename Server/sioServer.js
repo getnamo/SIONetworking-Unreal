@@ -48,6 +48,7 @@ io.on('connection', socket =>{
 	//echo message to all other clients
 	//data should have sid-aid identifier so it know where to
 	//get forwarded to
+	//e.g. rep object would likely be {'aid':'3-Widget2', 'data':{}}
 	socket.on('replicate', data =>{
 		if(debugReplicationStream){
 			console.dir(data, { depth:null});
@@ -88,12 +89,16 @@ io.on('connection', socket =>{
 		}
 	});
 
-	socket.on('newActor', newActorData =>{
+	socket.on('newActor', (newActorData, callback) =>{
 		//store latest data in actor map
-		storage.newActor(newActorData);
+		const aid = storage.newActor(newActorData);
+		newActorData.actorId = aid;
+
+		//return unique actor id to initial caller
+		callback(aid);
 
 		//this message spawns the actors with defined extra meta data
-		//{ actorSessionUniqueId, meta: {} }
+		//{ aid, data: {} }
 		socket.broadcast.emit('onNewActor', newActorData);
 	});
 
