@@ -9,13 +9,17 @@ const io = require('socket.io')(http);
 const util = require('util');
 
 //For now we destruct the whole class, todo: wrap up the functionality as a class
-let { userSocketMap,
+let { storage } = require('./storage.js');
+
+/*
+userSocketMap,
 	socketUserMap,
 	playerMap,
 	actorMap,
 	clients,
 	lidMap, 
-	requestNewId } = require('./storage.js');
+	requestNewId 
+*/
 
 const port = 3001;
 
@@ -63,16 +67,15 @@ io.on('connection', socket =>{
 	//should be requested on startup
 	socket.on('newPlayer', (playerStartupData, callback) =>{
 		//map userid to socket lookup for later
-		//lidMap[playerStartupData.loginId] = 
-		userSocketMap[playerStartupData.userId] = socket;
-		socketUserMap[socket.id] = playerStartupData.userId;
-		playerMap[playerStartupData.userId] = playerStartupData;
+		const sid = storage.onNewPlayer(playerStartupData, socket);
 
-		console.log('newPlayer joined: ' + playerStartupData.userId + `(${socket.id})`);
-		console.log(playerMap);
+		console.log(`newPlayer joined: ${playerStartupData.loginId}(${socket.id}) as ${sid}`);
 
-		callback()
-		socket.broadcast.emit('onPlayerJoined', playerStartupData);
+		//return the session user id to the caller
+		callback(sid);
+
+		//multicast full startup data with sid
+		socket.broadcast.emit('onPlayerJoined', playerForSession(sid));
 	});
 
 	socket.on('deletePlayer', playerCleanup);
