@@ -116,8 +116,16 @@ const storage = ()=>{
 		return clientDisconnectedMsg;
 	}
 
+	function newActor(newActorData){
+		//actorSessionUniqueId == sessionId-actorLocalId
+		actorMap[newActorData.actorSessionUniqueId] = newActorData;
+	}
+	function deleteActor(deleteActorData){
+		delete actorMap[newActorData.actorSessionUniqueId];
+	}
+
 	return {
-		requestNewUserId,
+		requestNewSessionId,
 		resetAllData,
 		onNewPlayer,
 		sessionForSocket,
@@ -127,8 +135,5 @@ const storage = ()=>{
 		onDisconnect
 	}
 }
-
-//this will fill exports
-exports.resetData();
 
 exports.storage = storage();

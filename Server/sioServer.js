@@ -65,8 +65,13 @@ io.on('connection', socket =>{
 		//return the session user id to the caller
 		callback(sid);
 
+		//This will trigger the player to spawn a new actor with ownership
+		//which will emit a newActor message from them
+
 		//multicast full startup data with sid
 		socket.broadcast.emit('onPlayerJoined', playerForSession(sid));
+
+		//Todo: broadcast other already present players latest data
 	});
 
 	//remote delete, force someone off typically the 'disconnect variant will be called'
@@ -83,19 +88,22 @@ io.on('connection', socket =>{
 		}
 	});
 
-	socket.on('newActor', actorStartupData =>{
+	socket.on('newActor', newActorData =>{
 		//store latest data in actor map
-		actorMap[actorStartupData.sessionId + '-' + actorStartupData.actorId] = actorStartupData;
+		storage.newActor(newActorData);
 
-		socket.broadcast.emit('onNewActor', actorStartupData);
+		//this message spawns the actors with defined extra meta data
+		//{ actorSessionUniqueId, meta: {} }
+		socket.broadcast.emit('onNewActor', newActorData);
 	});
 
-	socket.on('deleteActor', actorCleanupData =>{
+	socket.on('deleteActor', deleteActorData =>{
 		//store latest data in actor map
-		delete actorMap[actorStartupData.sessionId + '-' + actorStartupData.actorId];
+		storage.deleteActor(deleteActorData);
 
 		//emit cleanup message to others
-		socket.broadcast.emit('onDeleteActor', actorCleanupData);
+		//typically only { actorSessionUniqueId }
+		socket.broadcast.emit('onDeleteActor', deleteActorData);
 	});
 
 	//End Replication
