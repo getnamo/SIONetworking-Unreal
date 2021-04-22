@@ -1,5 +1,6 @@
 /**
-Generic replication server for custom networking using socket.io.
+	Generic replication server for custom networking using socket.io.
+	Not a robust setup, more of a PoC/R&D
 */
 
 const app = require('express')();
@@ -7,16 +8,18 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const util = require('util');
 
-//This may need consolidation
+//For now we destruct the whole class, todo: wrap up the functionality as a class
 let { userSocketMap,
 	socketUserMap,
 	playerMap,
 	actorMap,
-	clients } = require('./storage.js');
+	clients,
+	lidMap, 
+	requestNewId } = require('./storage.js');
 
 const port = 3001;
 
-io.on('connection', (socket) =>{
+io.on('connection', socket =>{
 
 	//track connected clients via log
 	clients.push(socket.id);
@@ -52,14 +55,15 @@ io.on('connection', (socket) =>{
 	//Replication
 
 	//echo message to all other clients
-	socket.on('replicate', (data)=>{
+	socket.on('replicate', data =>{
 		console.dir(data, { depth:null});
 		socket.broadcast.emit('onReplicatedData', data);
 	});
 
 	//should be requested on startup
-	socket.on('newPlayer', (playerStartupData)=>{
+	socket.on('newPlayer', (playerStartupData, callback) =>{
 		//map userid to socket lookup for later
+		//lidMap[playerStartupData.loginId] = 
 		userSocketMap[playerStartupData.userId] = socket;
 		socketUserMap[socket.id] = playerStartupData.userId;
 		playerMap[playerStartupData.userId] = playerStartupData;
@@ -67,19 +71,20 @@ io.on('connection', (socket) =>{
 		console.log('newPlayer joined: ' + playerStartupData.userId + `(${socket.id})`);
 		console.log(playerMap);
 
+		callback()
 		socket.broadcast.emit('onPlayerJoined', playerStartupData);
 	});
 
 	socket.on('deletePlayer', playerCleanup);
 
-	socket.on('newActor', (actorStartupData)=>{
+	socket.on('newActor', actorStartupData =>{
 		//store latest data in actor map
 		actorMap[actorStartupData.userId + '-' + actorStartupData.actorId] = actorStartupData;
 
 		socket.broadcast.emit('onNewActor', actorStartupData);
 	});
 
-	socket.on('deleteActor', (actorCleanupData)=>{
+	socket.on('deleteActor', actorCleanupData =>{
 		//store latest data in actor map
 		delete actorMap[actorStartupData.userId + '-' + actorStartupData.actorId];
 
@@ -90,10 +95,19 @@ io.on('connection', (socket) =>{
 	//End Replication
 
 	//Voice - temp todo: switch to separate service
-	socket.on('replicateVoice', (voiceData)=>{
+	socket.on('replicateVoice', voiceData =>{
 		socket.broadcast.emit('onVoice', voiceData);
 	});
 	//End Voice
+
+	//Script Replication
+	socket.on('syncScript', scriptData =>{
+		//should be {path, content}
+		if(scriptData.path){
+			console.log(scriptData.path, ' script got updated. Rebroadcasting');
+			socket.broadcast.emit('onScriptUpdated', scriptData);
+		}
+	})
 });
 
 
