@@ -60,6 +60,7 @@ const storage = ()=>{
 		return newId;
 	}
 
+	//playerStartupData = {userLoginId, class, hardwareForm}
 	function onNewPlayer(playerStartupData, socket){
 		//get a new session id
 		let sid = requestNewSessionId();
