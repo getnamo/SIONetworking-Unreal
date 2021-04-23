@@ -88,6 +88,7 @@ io.on('connection', socket =>{
 		}
 	});
 
+	//newActor = {actorSessionUniqueId, actorClass}
 	socket.on('newActor', (newActorData, callback=()=>{}) =>{
 		//store latest data in actor map
 		const aid = storage.newActor(newActorData);

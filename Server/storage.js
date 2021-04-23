@@ -60,7 +60,8 @@ const storage = ()=>{
 		return newId;
 	}
 
-	//playerStartupData = {userLoginId, class, hardwareForm}
+	//playerStartupData = {userLoginId, (class, playerType)} 
+	//where playertype == hardware form e.g. desktop/vr/mobile/observer
 	function onNewPlayer(playerStartupData, socket){
 		//get a new session id
 		let sid = requestNewSessionId();
