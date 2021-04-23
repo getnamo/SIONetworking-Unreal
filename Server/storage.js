@@ -1,3 +1,5 @@
+const util = require('util');
+
 /**
 	Hold the current player and actor state of the server.
 
@@ -64,18 +66,18 @@ const storage = ()=>{
 		playerStartupData.sessionId = sid;
 
 		//map our login id to session id. NB: two users on same computers will clash here
-		loginSessionMap[playerStartupData.loginId] = sid;
+		loginSessionMap[playerStartupData.userLoginId] = sid;
 
 		//store sid<->session maps
 		sessionSocketMap[sid] = socket;
 		socketSessionMap[socket.id] = sid;
-		sessionLoginMap[sid] = playerStartupData.loginId;
+		sessionLoginMap[sid] = playerStartupData.userLoginId;
 
 		//have a way to lookup player startup data
 
 		//remove loginData, should only be visible to server via
 		//sessionLoginMap
-		delete playerStartupData.loginId;	
+		delete playerStartupData.userLoginId;	
 		sessionPlayerMap[sid] = playerStartupData;
 
 		return sid;
@@ -107,7 +109,7 @@ const storage = ()=>{
 		delete loginSessionMap[lid];
 
 		if(playerSocket){
-			delete socketUserMap[playerSocket.id];
+			delete socketSessionMap[playerSocket.id];
 			return true;
 		}
 		return false;
@@ -144,7 +146,9 @@ const storage = ()=>{
 		resetAllData,
 		onNewPlayer,
 		sessionForSocket,
+		newActor,
 		playerForSession,
+		socketForSession,
 		onConnection,
 		deletePlayer,
 		onDisconnect

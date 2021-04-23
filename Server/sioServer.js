@@ -28,7 +28,6 @@ io.on('connection', socket =>{
 
 	//track connected clients via log
 	storage.onConnection(socket);
-	clients.push(socket.id);
 
 	function onPlayerDeleted(sid){
 		//this deletes the player from storage
@@ -36,7 +35,7 @@ io.on('connection', socket =>{
 
 		//emit cleanup message to others
 		socket.broadcast.emit('onPlayerLeft', sid);
-		console.log('onPlayerLeft', sid);
+		console.log(`onPlayerLeft sessionId: ${sid}`);
 	}
 
 	socket.on('disconnect', ()=>{
@@ -57,11 +56,11 @@ io.on('connection', socket =>{
 	});
 
 	//should be requested on startup
-	socket.on('newPlayer', (playerStartupData, callback) =>{
+	socket.on('newPlayer', (playerStartupData, callback=()=>{}) =>{
 		//map userid to socket lookup for later
 		const sid = storage.onNewPlayer(playerStartupData, socket);
 
-		console.log(`newPlayer joined: ${playerStartupData.loginId}(${socket.id}) as ${sid}`);
+		console.log(`newPlayer joined: ${playerStartupData.UserloginId}(${socket.id}) as ${sid}`);
 
 		//return the session user id to the caller
 		callback(sid);
@@ -70,13 +69,13 @@ io.on('connection', socket =>{
 		//which will emit a newActor message from them
 
 		//multicast full startup data with sid
-		socket.broadcast.emit('onPlayerJoined', playerForSession(sid));
+		socket.broadcast.emit('onPlayerJoined', storage.playerForSession(sid));
 
 		//Todo: broadcast other already present players latest data
 	});
 
 	//remote delete, force someone off typically the 'disconnect variant will be called'
-	socket.on('deletePlayer', (sid, callback)=>{
+	socket.on('deletePlayer', (sid, callback=()=>{})=>{
 		let forcedSocket = storage.socketForSession(sid);
 		onPlayerDeleted(sid);
 
@@ -89,10 +88,12 @@ io.on('connection', socket =>{
 		}
 	});
 
-	socket.on('newActor', (newActorData, callback) =>{
+	socket.on('newActor', (newActorData, callback=()=>{}) =>{
 		//store latest data in actor map
 		const aid = storage.newActor(newActorData);
 		newActorData.actorId = aid;
+
+		console.log('new Actor: ' + aid);
 
 		//return unique actor id to initial caller
 		callback(aid);
