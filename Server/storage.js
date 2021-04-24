@@ -30,6 +30,7 @@ const storage = ()=>{
 	//aid => last data
 	//sid-alid => aid
 	let actorMap = {};
+	let sessionActorMap = {};
 	let actorSessionLocalToIdMap = {};
 
 	function resetAllData(){
@@ -43,6 +44,7 @@ const storage = ()=>{
 		sessionPlayerMap = {};
 		sessionLoginMap = {};
 		actorMap = {};
+		sessionActorMap = {};	//user-Actor
 		actorSessionLocalToIdMap = {};
 
 		sessionIdCounter = 0;
@@ -85,6 +87,14 @@ const storage = ()=>{
 		return sid;
 	}
 
+	function currentActors(socket){
+		const sid = sessionForSocket(socket);
+
+		//todo: filter
+
+		return actorMap;
+	}
+
 	function sessionForSocket(socket){
 		return socketSessionMap[socket.id];
 	}
@@ -111,7 +121,19 @@ const storage = ()=>{
 		delete loginSessionMap[lid];
 
 		if(playerSocket){
+			//loop through each actor and delete
+			if(sessionActorMap[sid]){
+				sessionActorMap[sid].forEach( actorData =>{
+					deleteActor(actorData, playerSocket);
+				});
+				delete sessionActorMap[sid];
+			}
+			else{
+				console.log(sid, ' has no sessionActorMap entry.');
+			}
+
 			delete socketSessionMap[playerSocket.id];
+			
 			return true;
 		}
 		return false;
@@ -128,7 +150,7 @@ const storage = ()=>{
 		return clientDisconnectedMsg;
 	}
 
-	function newActor(newActorData){
+	function newActor(newActorData, socket){
 		//actorSessionUniqueId == sessionId-actorLocalId
 		const actorId = requestNewActorId();
 
@@ -136,11 +158,23 @@ const storage = ()=>{
 
 		newActorData.actorId = actorId;
 		actorMap[actorId] = newActorData;
+		
+		//add session => actor list so we can delete all session ones
+		if(!sessionActorMap[sessionForSocket(socket)]){
+			sessionActorMap[sessionForSocket(socket)] = [];
+		}
+		sessionActorMap[sessionForSocket(socket)].push(newActorData);
 
 		return actorId;
 	}
-	function deleteActor(deleteActorData){
-		delete actorMap[newActorData.actorSessionUniqueId];
+	function deleteActor(deleteActorData, socket){
+		//emit cleanup message to others
+		//typically only { actorClass, actorSessionUniqueId, actorId }
+		socket.broadcast.emit('onDeleteActor', deleteActorData);
+
+		delete actorMap[deleteActorData.actorId];
+
+		console.log('actor deleted: ' + util.inspect(deleteActorData));
 	}
 
 	return {
@@ -153,7 +187,8 @@ const storage = ()=>{
 		socketForSession,
 		onConnection,
 		deletePlayer,
-		onDisconnect
+		onDisconnect,
+		currentActors
 	}
 }
 

@@ -22,9 +22,14 @@ userSocketMap,
 */
 
 const port = 3001;
-const debugReplicationStream = true;
+const debugReplicationStream = false;
+const debugOnSingleSocket = false;
 
 io.on('connection', socket =>{
+	let repChannel = socket.broadcast;
+	if(debugOnSingleSocket){
+		repChannel = io;
+	}
 
 	//track connected clients via log
 	storage.onConnection(socket);
@@ -52,6 +57,7 @@ io.on('connection', socket =>{
 		if(debugReplicationStream){
 			console.dir(data, { depth:null});
 		}
+
 		socket.broadcast.emit('onReplicatedData', data);
 	});
 
@@ -70,6 +76,15 @@ io.on('connection', socket =>{
 
 		//multicast full startup data with sid
 		socket.broadcast.emit('onPlayerJoined', storage.playerForSession(sid));
+
+		let actorMap = storage.currentActors(socket);
+
+		console.log('newPlayer actor list begin');
+		for (const [key, value] of Object.entries(actorMap)) {
+			console.log(key, value);
+			socket.emit('onNewActor', value);
+		}
+		console.log('newPlayer actor list end');
 
 		//Todo: broadcast other already present players latest data
 	});
@@ -91,7 +106,7 @@ io.on('connection', socket =>{
 	//newActor = {actorSessionUniqueId, actorClass}
 	socket.on('newActor', (newActorData, callback=()=>{}) =>{
 		//store latest data in actor map
-		const aid = storage.newActor(newActorData);
+		const aid = storage.newActor(newActorData, socket);
 		newActorData.actorId = aid;
 
 		console.log('new Actor: ' + aid);
@@ -101,16 +116,16 @@ io.on('connection', socket =>{
 
 		//this message spawns the actors with defined extra meta data
 		//{ aid, data: {} }
+
 		socket.broadcast.emit('onNewActor', newActorData);
 	});
 
 	socket.on('deleteActor', deleteActorData =>{
-		//store latest data in actor map
-		storage.deleteActor(deleteActorData);
+		//remove actor from current list
+		storage.deleteActor(deleteActorData, socket);
 
-		//emit cleanup message to others
-		//typically only { actorSessionUniqueId }
-		socket.broadcast.emit('onDeleteActor', deleteActorData);
+		//broadcast to delete happens inside storage 
+		//so it can be cleaned on disconnect
 	});
 
 	//End Replication
