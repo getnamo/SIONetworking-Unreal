@@ -8,24 +8,15 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const util = require('util');
 
-//For now we destruct the whole class, todo: wrap up the functionality as a class
+//Holds user data and handles id conversions
 let { storage } = require('./storage.js');
-
-/*
-userSocketMap,
-	socketUserMap,
-	playerMap,
-	actorMap,
-	clients,
-	lidMap, 
-	requestNewId 
-*/
 
 const port = 3001;
 const debugReplicationStream = false;
 const debugOnSingleSocket = false;
 
 io.on('connection', socket =>{
+	//Currently unused - debug feature
 	let repChannel = socket.broadcast;
 	if(debugOnSingleSocket){
 		repChannel = io;
@@ -125,7 +116,7 @@ io.on('connection', socket =>{
 		storage.deleteActor(deleteActorData, socket);
 
 		//broadcast to delete happens inside storage 
-		//so it can be cleaned on disconnect
+		//so it can be cleaned remotely on disconnect
 	});
 
 	//End Replication
@@ -136,12 +127,12 @@ io.on('connection', socket =>{
 	});
 	//End Voice
 
-	//Script Replication
-	socket.on('syncScript', scriptData =>{
+	//Sync file structures, clients expect {path, content}
+	socket.on('syncFile', fileData =>{
 		//should be {path, content}
-		if(scriptData.path){
-			console.log(scriptData.path, ' script got updated. Rebroadcasting');
-			socket.broadcast.emit('onScriptUpdated', scriptData);
+		if(fileData.path){
+			console.log(fileData.path, ' file got updated. Rebroadcasting');
+			socket.broadcast.emit('onFileUpdated', fileData);
 		}
 	})
 });
