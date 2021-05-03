@@ -55,8 +55,16 @@ io.on('connection', socket =>{
 
 	socket.on('replicateEvent', eventData =>{
 		if(eventData != undefined){
-			console.log('replicated event for ' + eventData.aid, eventData.name);
+			console.log('replicated event for ', eventData.aid, eventData.name);
 			socket.broadcast.emit('onReplicateEvent', eventData);
+		}
+	});
+
+	socket.on('rpc', rpcData =>{
+		if(rpcData != undefined){
+			console.log('replicated rpc ', rpcData.aid, ' function: ', 
+				rpcData.name, JSON.stringify(rpcData.param));
+			socket.broadcast.emit('onRpc', rpcData);
 		}
 	});
 
@@ -66,6 +74,9 @@ io.on('connection', socket =>{
 		const sid = storage.onNewPlayer(playerStartupData, socket);
 
 		console.log(`newPlayer joined: ${playerStartupData.UserloginId}(${socket.id}) as ${sid}`);
+		
+		//before we callback, grab the current actor list
+		const actorMap = {... storage.currentActors(socket)};
 
 		//return the session user id to the caller
 		callback(sid);
@@ -76,14 +87,19 @@ io.on('connection', socket =>{
 		//multicast full startup data with sid
 		socket.broadcast.emit('onPlayerJoined', storage.playerForSession(sid));
 
-		let actorMap = storage.currentActors(socket);
+		//delay spawn all the currently syncing actors
+		setTimeout(()=>{
+			console.log('newPlayer actor list begin');
+			for (const [key, value] of Object.entries(actorMap)) {
+				console.log(key, value);
+				socket.emit('onNewActor', value);
+			}
+			console.log('newPlayer actor list end');
 
-		console.log('newPlayer actor list begin');
-		for (const [key, value] of Object.entries(actorMap)) {
-			console.log(key, value);
-			socket.emit('onNewActor', value);
-		}
-		console.log('newPlayer actor list end');
+		}, 200);
+
+
+
 
 		//Todo: broadcast other already present players latest data
 	});
