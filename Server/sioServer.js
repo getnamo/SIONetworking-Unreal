@@ -7,11 +7,11 @@ const app = require('express')();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const util = require('util');
+const { port } = require('./settings.js');
 
 //Holds user data and handles id conversions
 let { storage } = require('./storage.js');
 
-const port = 3001;
 const debugReplicationStream = false;
 const debugOnSingleSocket = false;
 
