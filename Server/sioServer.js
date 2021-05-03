@@ -52,6 +52,14 @@ io.on('connection', socket =>{
 		socket.broadcast.emit('onReplicatedData', data);
 	});
 
+
+	socket.on('replicateEvent', eventData =>{
+		if(eventData != undefined){
+			console.log('replicated event for ' + eventData.aid, eventData.name);
+			socket.broadcast.emit('onReplicateEvent', eventData);
+		}
+	});
+
 	//should be requested on startup
 	socket.on('newPlayer', (playerStartupData, callback=()=>{}) =>{
 		//map userid to socket lookup for later
