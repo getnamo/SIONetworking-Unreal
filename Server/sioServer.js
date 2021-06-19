@@ -153,9 +153,9 @@ io.on('connection', socket =>{
 
 	//Sync file structures, clients expect {path, content}
 	socket.on('syncFile', fileData =>{
-		//should be {path, content}
-		if(fileData.path){
-			console.log(fileData.path, ' file got updated. Rebroadcasting');
+		//should be {filePath, content}
+		if(fileData.filePath){
+			console.log(fileData.filePath, ' file got updated. Rebroadcasting');
 			socket.broadcast.emit('onFileUpdated', fileData);
 		}
 	})
