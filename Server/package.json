@@ -4,6 +4,6 @@
   "description": "server counterpart of https://github.com/getnamo/sionetworking-unreal",
   "dependencies": {
     "express": "4.18.2",
-    "socket.io": "^4.5.3"
+    "socket.io": "^4.6.1"
   }
 }
