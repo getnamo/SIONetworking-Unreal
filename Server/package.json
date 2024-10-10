@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "server counterpart of https://github.com/getnamo/sionetworking-unreal",
   "dependencies": {
-    "express": "4.21.0",
-    "socket.io": "^4.7.5"
+    "express": "4.21.1",
+    "socket.io": "^4.8.0"
   }
 }
